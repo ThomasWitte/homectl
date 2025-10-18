@@ -11,7 +11,6 @@ use crate::data::TPSensorData;
 async fn query_device(adapter: &Adapter, addr: Address) -> bluer::Result<Option<Characteristic>> {
     let device = adapter.device(addr)?;
     let name = device.name().await?;
-    println!("name: {name:?}");
     if name.is_some() && name.unwrap().starts_with("TP357") {
         return query_tp(&device).await;
     }
@@ -110,7 +109,6 @@ pub async fn bt_main(tx: Sender<TPSensorData>) -> bluer::Result<()> {
                             continue;
                         }
 
-                        println!("Device added: {addr}");
                         let res = query_device(&adapter, addr).await;
                         if let Ok(Some(ref c)) = res {
                             let tx = tx.clone();
@@ -118,23 +116,24 @@ pub async fn bt_main(tx: Sender<TPSensorData>) -> bluer::Result<()> {
                             tokio::spawn(async move {
                                 let mut reader = c.notify_io().await.expect("notify failed");
                                 loop {
-                                    if let Ok(data) = reader.recv().await {
-                                        if data.len() < 6 {
-                                            continue;
-                                        }
-                                        println!("new data from {addr}: {:?}", data);
-                                        let temp = (data[3] as i32 + data[4] as i32 * 256) as f32 / 10.0;
-                                        let humidity = data[5] as u8;
-                                        println!("temp: {temp}, humidity: {humidity}");
-                                        tx.send(TPSensorData {
-                                            address: addr.to_string(),
-                                            temperature: temp,
-                                            humidity,
-                                        }).await.expect("Failed to send sensor data");
-                                    } else {
-                                        // try to reconnect
-                                        println!("notify stream ended, reconnecting...");
-                                        reader = c.notify_io().await.expect("notify failed");
+                                    match reader.recv().await {
+                                        Ok(data) => {
+                                            if data.len() < 6 {
+                                                continue;
+                                            }
+                                            let temp = (data[3] as i32 + data[4] as i32 * 256) as f32 / 10.0;
+                                            let humidity = data[5] as u8;
+                                            tx.send(TPSensorData {
+                                                address: addr.to_string(),
+                                                temperature: temp,
+                                                humidity,
+                                            }).await.expect("Failed to send sensor data");
+                                        },
+                                        Err(e) => {
+                                            // try to reconnect
+                                            eprintln!("error from notify stream: {e:?}");
+                                            reader = c.notify_io().await.expect("notify failed");
+                                        },
                                     }
                                 }
                             });

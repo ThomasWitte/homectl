@@ -109,7 +109,10 @@ pub fn create_rooms() -> Vec<Room> {
             sensor: None,
             sensor_history: Vec::new(),
             sensor_ttl: None,
-            actor: None,
+            actor: Some(HeatingActor {
+                address: "http://shellypro3-ece334ed1928.local/relay/0".to_string(),
+                state: HeatingState::Manual(0),
+            }),
         },
         // Room {
         //     name: "Gäste-WC".to_string(),
@@ -165,12 +168,20 @@ pub async fn update_actors(
                     println!("found actor!");
                     match actor.state {
                         HeatingState::Manual(level) => {
-                            let time = level as u32 * 3600/6;
-                            let url = &actor.address;
-                            let query = [("turn", "on"), ("timer", &format!("{time}"))];
-                            let request = client.get(url).query(&query);
-                            println!("Sending request: {request:?}");
-                            requests.push(request.send());
+                            if level == 0 {
+                                let url = &actor.address;
+                                let query = [("turn", "off")];
+                                let request = client.get(url).query(&query);
+                                println!("Sending request: {request:?}");
+                                requests.push(request.send());
+                            } else {
+                                let time = level as u32 * 3600/6;
+                                let url = &actor.address;
+                                let query = [("turn", "on"), ("timer", &format!("{time}"))];
+                                let request = client.get(url).query(&query);
+                                println!("Sending request: {request:?}");
+                                requests.push(request.send());
+                            }
                         },
                         HeatingState::Auto(_) => unimplemented!()
                     }
