@@ -119,6 +119,9 @@ pub async fn bt_main(tx: Sender<TPSensorData>) -> bluer::Result<()> {
                                 let mut reader = c.notify_io().await.expect("notify failed");
                                 loop {
                                     if let Ok(data) = reader.recv().await {
+                                        if data.len() < 6 {
+                                            continue;
+                                        }
                                         println!("new data from {addr}: {:?}", data);
                                         let temp = (data[3] as i32 + data[4] as i32 * 256) as f32 / 10.0;
                                         let humidity = data[5] as u8;

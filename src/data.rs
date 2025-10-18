@@ -155,19 +155,32 @@ pub fn create_rooms() -> Vec<Room> {
 pub async fn update_actors(
     rooms: Arc<Mutex<Vec<Room>>>,
 ) {
+    println!("Starting update_actors loop");
     let client = reqwest::ClientBuilder::new().build().unwrap();
     loop {
+        let mut requests = Vec::new();
         if let Ok(rooms) = rooms.lock() {
             for room in &*rooms {
                 if let Some(actor) = &room.actor {
+                    println!("found actor!");
                     match actor.state {
                         HeatingState::Manual(level) => {
                             let time = level as u32 * 3600/6;
-                            let _ = client.get(format!("{}?turn=on&timer={time}", actor.address)).send();
+                            let url = &actor.address;
+                            let query = [("turn", "on"), ("timer", &format!("{time}"))];
+                            let request = client.get(url).query(&query);
+                            println!("Sending request: {request:?}");
+                            requests.push(request.send());
                         },
                         HeatingState::Auto(_) => unimplemented!()
                     }
                 }
+            }
+        }
+        for request in requests {
+            match request.await {
+                Ok(response) => println!("{response:?}"),
+                Err(e) => eprintln!("{e}")
             }
         }
         tokio::time::sleep(Duration::from_secs(3600)).await;
