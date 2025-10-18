@@ -1,0 +1,16 @@
+[package]
+name = "homectl"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+bluer = { version = "0.17.4", features = ['bluetoothd'] }
+eframe = { version = "0.32.3", features = ['persistence'] }
+env_logger = "0.11.8"
+futures = "0.3.31"
+serde = "1.0.228"
+serde_json = "1.0.145"
+tokio = { version = "1.47.1", features = ['signal', 'rt-multi-thread'] }
+tokio-util = "0.7.16"
+uuid = "1.18.1"
