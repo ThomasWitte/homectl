@@ -7,7 +7,7 @@ use tokio::sync::mpsc::channel;
 use tokio_util::sync::CancellationToken;
 
 use crate::data::{
-    HeatingState, Room, SensorHistoryItem, create_rooms, save_rooms_to_file, update_rooms,
+    create_rooms, save_rooms_to_file, update_actors, update_rooms, HeatingState, Room, SensorHistoryItem
 };
 
 pub struct MyApp {
@@ -35,7 +35,8 @@ impl MyApp {
             rt.block_on(async {
                 let (tx, rx) = channel(10);
                 let handle = tokio::spawn(crate::bt::bt_main(tx));
-                let update_rooms_handle = tokio::spawn(update_rooms(rx, rooms_clone, ctx_clone));
+                let update_rooms_handle = tokio::spawn(update_rooms(rx, rooms_clone.clone(), ctx_clone));
+                let update_actors_handle = tokio::spawn(update_actors(rooms_clone.clone()));
 
                 tokio::select! {
                     _ = tokio::signal::ctrl_c() => {
@@ -53,6 +54,11 @@ impl MyApp {
                     res = update_rooms_handle => {
                         if let Err(err) = res {
                             eprintln!("Error in update_rooms: {}", err);
+                        }
+                    }
+                    res = update_actors_handle => {
+                        if let Err(err) = res {
+                            eprintln!("Error in update_actors: {}", err);
                         }
                     }
                 }
@@ -74,7 +80,7 @@ impl eframe::App for MyApp {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
 
-        let rooms = self.rooms.lock().unwrap();
+        let mut rooms = self.rooms.lock().unwrap();
         let history_len = Duration::from_secs(24 * 60 * 60);
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -82,7 +88,7 @@ impl eframe::App for MyApp {
             let row_width = 800.0;
             let margin = row_height / 20.0;
             let mut pos = 0.0;
-            for room in &*rooms {
+            for room in &mut *rooms {
                 let col = if let Some(sensor) = &room.sensor {
                     if sensor.temperature < 16.0 {
                         Color32::from_rgb(0, 0, 255)
@@ -174,7 +180,7 @@ impl eframe::App for MyApp {
                             .circle_filled(Pos2 { x, y }, 1.0, Color32::BLUE);
                     }
                 }
-                if let Some(actor) = &room.actor {
+                if let Some(actor) = &mut room.actor {
                     let buttons_pos = row_width - 3.5 * row_height;
                     ui.put(
                         Rect::from_two_pos(
@@ -225,7 +231,7 @@ impl eframe::App for MyApp {
                         } else {
                             Button::new(format!("{}", i))
                         };
-                        ui.put(
+                        if ui.put(
                             Rect::from_two_pos(
                                 Pos2 {
                                     x: (buttons_pos as i32 + i as i32 * row_height as i32 / 2)
@@ -240,7 +246,9 @@ impl eframe::App for MyApp {
                                 },
                             ),
                             btn,
-                        );
+                        ).clicked() {
+                            actor.state = HeatingState::Manual(i);
+                        };
                     }
                 }
                 pos += row_height;

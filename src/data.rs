@@ -91,10 +91,10 @@ pub fn create_rooms() -> Vec<Room> {
             sensor_ttl: None,
             sensor: None,
             sensor_history: Vec::new(),
-            actor: /*Some(HeatingActor {
-                address: "".to_string(),
+            actor: Some(HeatingActor {
+                address: "http://shellypro3-ece334ed1928.local/relay/2".to_string(),
                 state: HeatingState::Manual(3),
-            })*/ None,
+            }),
         },
         // Room {
         //     name: "Bad oben".to_string(),
@@ -150,6 +150,28 @@ pub fn create_rooms() -> Vec<Room> {
             actor: None,
         },
     ]
+}
+
+pub async fn update_actors(
+    rooms: Arc<Mutex<Vec<Room>>>,
+) {
+    let client = reqwest::ClientBuilder::new().build().unwrap();
+    loop {
+        if let Ok(rooms) = rooms.lock() {
+            for room in &*rooms {
+                if let Some(actor) = &room.actor {
+                    match actor.state {
+                        HeatingState::Manual(level) => {
+                            let time = level as u32 * 3600/6;
+                            let _ = client.get(format!("{}?turn=on&timer={time}", actor.address)).send();
+                        },
+                        HeatingState::Auto(_) => unimplemented!()
+                    }
+                }
+            }
+        }
+        tokio::time::sleep(Duration::from_secs(3600)).await;
+    }
 }
 
 pub async fn update_rooms(
