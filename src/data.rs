@@ -161,6 +161,7 @@ pub async fn update_actors(
     println!("Starting update_actors loop");
     let client = reqwest::ClientBuilder::new().build().unwrap();
     loop {
+        println!("updating actors now");
         let mut requests = Vec::new();
         if let Ok(rooms) = rooms.lock() {
             for room in &*rooms {
@@ -194,6 +195,7 @@ pub async fn update_actors(
                 Err(e) => eprintln!("{e}")
             }
         }
+        println!("done updating actors, see you in 1h!");
         tokio::time::sleep(Duration::from_secs(3600)).await;
     }
 }
@@ -205,6 +207,7 @@ pub async fn update_rooms(
 ) {
     loop {
         let sensor = rx.recv().await;
+        print!(":");
 
         let sensor = match sensor {
             Some(s) => s,
@@ -249,6 +252,7 @@ pub async fn update_rooms(
             }
         }
         ctx.request_repaint();
+        println!(")");
     }
 }
 

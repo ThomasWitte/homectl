@@ -40,16 +40,8 @@ async fn query_tp(device: &Device) -> bluer::Result<Option<Characteristic>> {
 
     println!("    Enumerating services...");
     for service in device.services().await? {
-        let uuid = service.uuid().await?;
-        println!("    Service UUID: {}", &uuid);
-        println!("    Service data: {:?}", service.all_properties().await?);
         for char in service.characteristics().await? {
             let uuid = char.uuid().await?;
-            println!("    Characteristic UUID: {}", &uuid);
-            println!(
-                "    Characteristic data: {:?}",
-                char.all_properties().await?
-            );
             if uuid == uuid::Uuid::from_u128(0x000102030405060708090a0b0c0d2b10) {
                 println!("characteristic found");
                 return Ok(Some(char));
