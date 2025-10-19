@@ -250,7 +250,7 @@ pub async fn update_rooms(
                 }
             }
         }
-        ctx.request_repaint();
+//        ctx.request_repaint();
     }
 }
 

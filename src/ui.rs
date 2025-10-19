@@ -1,4 +1,4 @@
-use eframe::egui::{Button, Color32, Pos2, Rect, Stroke};
+use eframe::egui::{Button, Color32, Context, Pos2, Rect, Stroke};
 use eframe::{CreationContext, egui};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -13,6 +13,13 @@ use crate::data::{
 pub struct MyApp {
     ct: CancellationToken,
     rooms: Arc<Mutex<Vec<Room>>>,
+}
+
+async fn redraw_loop(ctx: Context, sleep_time: Duration) {
+    loop {
+        ctx.request_repaint();
+        tokio::time::sleep(sleep_time).await;
+    }
 }
 
 impl MyApp {
@@ -34,6 +41,7 @@ impl MyApp {
         std::thread::spawn(move || {
             rt.block_on(async {
                 let (tx, rx) = channel(10);
+                let redraw = tokio::spawn(redraw_loop(ctx_clone.clone(), Duration::from_secs(1)));
                 let handle = tokio::spawn(crate::bt::bt_main(tx));
                 let update_rooms_handle = tokio::spawn(update_rooms(rx, rooms_clone.clone(), ctx_clone));
                 let update_actors_handle = tokio::spawn(update_actors(rooms_clone.clone()));
@@ -64,6 +72,9 @@ impl MyApp {
                             eprintln!("Error in update_actors: {}", err);
                         }
                     }
+                    _ = redraw => {
+                        println!("shutdown redraw");
+                    }
                 }
             })
         });
@@ -73,9 +84,9 @@ impl MyApp {
 }
 
 impl eframe::App for MyApp {
-    fn auto_save_interval(&self) -> std::time::Duration {
-        std::time::Duration::from_secs(300)
-    }
+    // fn auto_save_interval(&self) -> std::time::Duration {
+    //     std::time::Duration::from_secs(300)
+    // }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if self.ct.is_cancelled() {
