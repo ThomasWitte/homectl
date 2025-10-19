@@ -207,7 +207,6 @@ pub async fn update_rooms(
 ) {
     loop {
         let sensor = rx.recv().await;
-        print!(":");
 
         let sensor = match sensor {
             Some(s) => s,
@@ -252,7 +251,6 @@ pub async fn update_rooms(
             }
         }
         ctx.request_repaint();
-        println!(")");
     }
 }
 

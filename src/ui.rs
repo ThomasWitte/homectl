@@ -47,16 +47,19 @@ impl MyApp {
                         println!("Cancellation requested, shutting down");
                     }
                     res = handle => {
+                        println!("shutdown bt");
                         if let Err(err) = res {
                             eprintln!("Error: {}", err);
                         }
                     }
                     res = update_rooms_handle => {
+                        println!("shutdown rooms");
                         if let Err(err) = res {
                             eprintln!("Error in update_rooms: {}", err);
                         }
                     }
                     res = update_actors_handle => {
+                        println!("shutdown actors");
                         if let Err(err) = res {
                             eprintln!("Error in update_actors: {}", err);
                         }

@@ -95,6 +95,7 @@ pub async fn bt_main(tx: Sender<TPSensorData>) -> bluer::Result<()> {
     loop {
         tokio::select! {
             Some(device_event) = device_events.next() => {
+                print!("Device Event {device_event:?} ");
                 match device_event {
                     AdapterEvent::DeviceAdded(addr) => {
                         if !filter_addr.is_empty() && !filter_addr.contains(&addr) {
@@ -142,8 +143,11 @@ pub async fn bt_main(tx: Sender<TPSensorData>) -> bluer::Result<()> {
                     }
                     _ => (),
                 }
+                println!("… done");
             }
-            else => break,
+            else => {
+                println!("device event none!");
+            },
         }
     }
 
