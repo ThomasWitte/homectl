@@ -125,7 +125,7 @@ pub async fn bt_main(tx: Sender<TPSensorData>) -> bluer::Result<()> {
                                         Err(e) => {
                                             // try to reconnect
                                             eprintln!("error from notify stream: {e:?}");
-                                            reader = c.notify_io().await.expect("notify failed");
+                                            //reader = c.notify_io().await.expect("notify failed");
                                         },
                                     }
                                 }
@@ -151,5 +151,5 @@ pub async fn bt_main(tx: Sender<TPSensorData>) -> bluer::Result<()> {
         }
     }
 
-    Ok(())
+    //Ok(())
 }

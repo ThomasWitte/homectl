@@ -134,7 +134,7 @@ impl eframe::App for MyApp {
                     ui.painter().text(
                         egui::pos2(2.0 * margin, pos + row_height / 2.0 + 2.0 * margin),
                         egui::Align2::LEFT_TOP,
-                        format!("{:.1}°C {}%", sensor.temperature, sensor.humidity),
+                        format!("{:.1}°C ({}s) {}%", sensor.temperature, (room.sensor_ttl.unwrap_or(Instant::now()) - Instant::now()).as_secs(), sensor.humidity),
                         egui::FontId::proportional(row_height / 4.0),
                         Color32::BLACK,
                     );
