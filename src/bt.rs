@@ -107,7 +107,7 @@ pub async fn bt_main(tx: Sender<TPSensorData>) -> bluer::Result<()> {
                             let tx = tx.clone();
                             let c = c.clone();
                             tokio::spawn(async move {
-                                let mut reader = c.notify_io().await.expect("notify failed");
+                                let reader = c.notify_io().await.expect("notify failed");
                                 loop {
                                     match reader.recv().await {
                                         Ok(data) => {

@@ -44,7 +44,7 @@ impl MyApp {
                 let redraw = tokio::spawn(redraw_loop(ctx_clone.clone(), Duration::from_secs(1)));
                 let handle = tokio::spawn(crate::bt::bt_main(tx));
                 let update_rooms_handle = tokio::spawn(update_rooms(rx, rooms_clone.clone(), ctx_clone));
-                let update_actors_handle = tokio::spawn(update_actors(rooms_clone.clone()));
+                //let update_actors_handle = tokio::spawn(update_actors(rooms_clone.clone()));
 
                 tokio::select! {
                     _ = tokio::signal::ctrl_c() => {
@@ -66,12 +66,12 @@ impl MyApp {
                             eprintln!("Error in update_rooms: {}", err);
                         }
                     }
-                    res = update_actors_handle => {
+                    /*res = update_actors_handle => {
                         println!("shutdown actors");
                         if let Err(err) = res {
                             eprintln!("Error in update_actors: {}", err);
                         }
-                    }
+                    }*/
                     _ = redraw => {
                         println!("shutdown redraw");
                     }
